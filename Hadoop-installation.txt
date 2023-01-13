@@ -1,0 +1,235 @@
+
+AIM: Installation of Hadoop
+
+steps and commands:
+
+1. Instal Default jdk
+
+sudo apt update
+
+sudo apt install dafualt-jdk -y
+
+java -version; javac -version
+
+2. Create  Hadoop User
+
+sudo adduser hadoop
+
+sudo usermod -aG sudo hadoop
+
+sudo su - hadoop
+
+3. Install  openSSH server(in any user) 
+
+sudo apt install openssh-server openssh-client -y
+
+4. Generate SSH Key Pair
+
+ssh-keygen -t rsa 
+
+sudo cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+
+sudo chmod 640 ~/.ssh/authorized_keys
+
+ssh localhost
+
+5.Download and install hadoop
+
+sudo su - hadoop
+
+wget https://downloads.apache.org/hadoop/common/hadoop-3.2.1/hadoop-3.2.1.tar.gz
+
+or
+
+#in case theres a predownloaded hadoop tar file so we just copy paste it from nornal user to hadoop user by this step(Note hadoop versions)
+
+sudo cp /home/UDCS/hadoop-3.2.1.tar.gz /home/hadoop/hadoop-3.2.1.tar.gz && sudo chown hadoop:hadoop /home/hadoop/hadoop-3.2.1.tar.gz
+
+tar -xvzf hadoop-3.2.1.tar.gz
+
+#Move the extracted directory to the /usr/local/ directory.
+
+sudo mv hadoop-3.3.1 /usr/local/hadoop
+
+#Create directory to store system logs.
+
+sudo mkdir /usr/local/hadoop/logs
+
+#Change the ownership of the hadoop directory.
+
+sudo chown -R hadoop:hadoop /usr/local/hadoop
+
+#A Hadoop environment is configured by editing a set of configuration files:
+
+#bashrc
+#hadoop-env.sh
+#core-site.xml
+#hdfs-site.xml
+#mapred-site-xml
+#yarn-site.xml
+
+6.Configure hadoop environment variables
+
+#bashrc file
+
+sudo nano .bashrc
+
+#Hadoop Related Options
+
+export HADOOP_HOME=/usr/local/hadoop
+export HADOOP_INSTALL=$HADOOP_HOME
+export HADOOP_MAPRED_HOME=$HADOOP_HOME
+export HADOOP_COMMON_HOME=$HADOOP_HOME
+export HADOOP_HDFS_HOME=$HADOOP_HOME
+
+export YARN_HOME=$HADOOP_HOME
+export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin
+export HADOOP_OPTS="-Djava.library.path=$HADOOP_HOME/lib/native"
+
+#Once you pasted these commands in bashrc file save & exit (ctrl+O AND ctrl+x)
+
+source ~/.bashrc
+
+#configure java environment variable
+
+which javac
+
+readlink -f /usr/bin/javac
+
+#hadoop-env.sh
+
+sudo nano $HADOOP_HOME/etc/hadoop/hadoop-env.sh
+
+#paste below code into env.sh file
+
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+export HADOOP_CLASSPATH+=" $HADOOP_HOME/lib/*.jar"
+
+(save and exit ctrl+o, ctrl+x)
+
+#change the directory by following.
+
+cd /usr/local/hadoop/lib
+
+sudo wget https://jcenter.bintray.com/javax/activation/javax.activation-api/1.2.0/javax.activation-api-1.2.0.jar
+
+hadoop version
+
+#Core-site.xml
+
+sudo nano $HADOOP_HOME/etc/hadoop/core-site.xml
+
+<configuration>
+<property>
+<name>fs.default.name</name>
+<value>hdfs://0.0.0.0:9000</value>
+<description>The default file system URI</description>
+</property>
+</configuration>
+
+(save and exit ctrl+o, ctrl+x)
+
+#Create a directory for storing node metadata and change the ownership to hadoop.
+
+sudo mkdir -p /home/hadoop/hdfs/{namenode,datanode}
+
+sudo chown -R hadoop:hadoop /home/hadoop/hdfs
+
+#hdfs-site.xml
+
+sudo nano $HADOOP_HOME/etc/hadoop/hdfs-site.xml
+
+<configuration>
+<property>
+<name>dfs.replication</name>
+<value>1</value>
+</property>
+
+<property>
+<name>dfs.name.dir</name>
+<value>file:///home/hadoop/hdfs/namenode</value>
+</property>
+
+<property>
+<name>dfs.data.dir</name>
+<value>file:///home/hadoop/hdfs/datanode</value>
+</property>
+
+<property>
+<name>dfs.permissions.enabled</name>
+<value>false</value>
+</property>
+</configuration>
+
+(save and close)
+
+#mapered-site.xml
+
+sudo nano $HADOOP_HOME/etc/hadoop/mapred-site.xml
+
+<configuration>
+<property>
+<name>mapreduce.framework.name</name>
+<value>yarn</value>
+</property>
+
+<property>
+<name>yarn.app.mapreduce.am.env</name>
+<value>HADOOP_MAPRED_HOME=/usr/local/hadoop</value>
+<description>Change this to your hadoop location.</description>
+</property>
+
+<property>
+<name>mapreduce.map.env</name>
+<value>HADOOP_MAPRED_HOME=/usr/local/hadoop</value>
+<description>Change this to your hadoop location.</description>
+</property>
+
+<property>
+<name>mapreduce.reduce.env</name>
+<value>HADOOP_MAPRED_HOME=/usr/local/hadoop/</value>
+<description>Change this to your hadoop location.</description>
+</property>
+</configuration>
+
+(save and close)
+
+#Yarn-site.xml
+
+sudo nano $HADOOP_HOME/etc/hadoop/yarn-site.xml
+
+<configuration>
+<property>
+<name>yarn.nodemanager.aux-services</name>
+<value>mapreduce_shuffle</value>
+</property>
+</configuration>
+
+(save and close)
+
+#Log in with hadoop user.
+
+sudo su - hadoop
+
+#Validate the Hadoop configuration and format the HDFS NameNode.
+
+hdfs namenode -format
+
+#Start the Apache Hadoop Cluster
+#Start the NameNode and DataNode.
+
+start-dfs.sh
+
+#Start the YARN resource and node managers.
+
+start-yarn.sh
+
+#Verify all the running components.
+
+jps
+
+#Access Apache Hadoop Web Interface
+
+http://localhost:9870
+
